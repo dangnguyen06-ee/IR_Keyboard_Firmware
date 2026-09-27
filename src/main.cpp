@@ -1,27 +1,29 @@
 #include <Arduino.h>
-#include <IRremote.hpp>
+#include <IRremoteESP8266.h>
+#include <IRrecv.h>
+#include <IRutils.h>
 
-#define IR_RECEIVE_PIN 6
+#define IR_RECEIVE_PIN 5
+
+IRrecv irrecv(IR_RECEIVE_PIN);
+decode_results results;
 
 void setup() {
-  Serial.begin(115200);
+    Serial.begin(115200);
+    while (!Serial && millis() < 3000) { delay(10); }
+    Serial.println();
+    Serial.println("=== IR Receiver Test ===");
+    Serial.print("Receiver pin: GPIO ");
+    Serial.println(IR_RECEIVE_PIN);
 
-  Serial.println("IR Receiver Test");
-  Serial.println("Point your IR remote at the receiver and press a button.");
-
-  IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK);
+    irrecv.enableIRIn();
+    Serial.println("Receiver enabled. Waiting for signal...");
 }
 
 void loop() {
-  if (IrReceiver.decode()) {
-    Serial.print("Received IR code: ");
-    Serial.print(getProtocolString(IrReceiver.decodedIRData.protocol));
-    Serial.print(", Address: ");
-    Serial.print(IrReceiver.decodedIRData.address, HEX);
-    Serial.print(", Command: ");
-    Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX);
-
-
-    IrReceiver.resume(); // Prepare for the next value
-  }
+    if (irrecv.decode(&results)) {
+        Serial.print(">>> ");
+        Serial.print(resultToHumanReadableBasic(&results));
+        irrecv.resume();
+    }
 }
